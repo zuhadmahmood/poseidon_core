@@ -21,7 +21,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   set(LLVM_DIR "/opt/homebrew/opt/llvm@12/lib/cmake/llvm")
   set(ANTLR_EXECUTABLE "/opt/homebrew/Cellar/antlr/4.13.1/antlr-4.13.1-complete.jar")
 else()
-  set(ANTLR_EXECUTABLE "${CMAKE_SOURCE_DIR}/jars/antlr4-4.13.1-complete.jar")
+  set(ANTLR_EXECUTABLE "${CMAKE_SOURCE_DIR}/jars/antlr-4.13.1-complete.jar")
 endif()
 
 # Don't try to contact github everytime.
@@ -68,6 +68,14 @@ else()
 endif()
 
 # message("grammar: ${ANTLR_grammar_CXX_OUTPUTS}")
+
+#-------------------------------------------------------------------------------
+# ZM AWS
+# Set the AWS service components used by this project.
+set(SERVICE_COMPONENTS s3 transfer)
+
+# Find the AWS SDK for C++ package.
+find_package(AWSSDK REQUIRED COMPONENTS ${SERVICE_COMPONENTS})
 
 #-------------------------------------------------------------------------------
 
@@ -366,6 +374,8 @@ set(src_files
   src/query/parser/query_proc.cpp
   src/analytics/bfs.cpp
   src/analytics/shortest_path.cpp
+  src/bp_file/S3Manager.cpp
+
   ${ANTLR_grammar_CXX_OUTPUTS}
 )
 
@@ -391,6 +401,7 @@ endif()
 
 target_link_libraries(poseidon_core
   ${LLVM_LIB}
+  ${AWSSDK_LINK_LIBRARIES}
   antlr4_cpp_runtime
 #  antlr4_shared
   Boost::filesystem

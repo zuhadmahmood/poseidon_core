@@ -24,7 +24,8 @@
 #include <memory>
 #include <bitset>
 #include <functional>
-
+#include <filesystem> 
+#include "S3Manager.hpp"
 #define PAGE_SIZE           1048576 // 1024 * 1024
 #define FHEADER_PAYLOAD_SIZE 9216
 /**
@@ -106,7 +107,7 @@ public:
     page_id last_valid_page();
 
     /**
-     * Deallocate the page with the given page_id. The space can 
+     * Deallocate the pagke with the given page_id. The space can 
      * be reused by a subsequent allocate_page() call.
      */
     bool free_page(page_id pid);
@@ -129,7 +130,7 @@ public:
     void scan_pages(page& p, std::function<void(page&, page_id)> cb);
 
     void truncate();
-    
+     
 private:
     /**
      * Find the first available slot (page) which can be reused.
@@ -141,6 +142,7 @@ private:
     uint64_t npages_;    /// the number of pages occupied by the file (used and unused)
     file_header header_; /// the file header
     header_cb header_callback_; /// function called after reading before writing the header
+    S3Manager s3Manager;
 };
 
 using paged_file_ptr = std::shared_ptr<paged_file>;

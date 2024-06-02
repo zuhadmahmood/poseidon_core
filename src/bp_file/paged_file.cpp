@@ -21,7 +21,7 @@
 #include "defs.hpp"
 #include "exceptions.hpp"
 #include "paged_file.hpp"
-
+#include "S3Manager.hpp"
 #include "spdlog/spdlog.h"
 
 bool paged_file::open(const std::string& path, int file_type) {
@@ -29,14 +29,26 @@ bool paged_file::open(const std::string& path, int file_type) {
     std::filesystem::path path_obj(path);
     // check if path exists and is of a regular file
     if (! std::filesystem::exists(path_obj)) {
-        file_.open(path, std::fstream::in | std::fstream::out | std::fstream::trunc | std::fstream::binary);
-        header_.ftype_ = file_type;
-        header_.slots_.reset();
-        memset(header_.payload_, 0, FHEADER_PAYLOAD_SIZE);
-        file_.write((const char *)&header_, sizeof(header_));
-        spdlog::debug("create new paged_file: {}", path);
+        if (s3Manager.searchObjectInBucket("mybucket",path))
+        {
+            s3Manager.downloadS3File(path);
+        }
+        else
+        {
+            file_.open(path, std::fstream::in | std::fstream::out | std::fstream::trunc | std::fstream::binary);
+            header_.ftype_ = file_type;
+            header_.slots_.reset();
+            memset(header_.payload_, 0, FHEADER_PAYLOAD_SIZE);
+            file_.write((const char *)&header_, sizeof(header_));
+            spdlog::debug("create new paged_file: {}", path);
+        }
+        //s3Manager.downloadFile(path);
     }
     else {
+        if (s3Manager.searchObjectInBucket("mybucket",path))
+        {
+            s3Manager.downloadS3File(path);
+        }
         file_.open(path, std::fstream::in | std::fstream::out | std::fstream::binary);
         spdlog::debug("open existing paged_file: {}, header size: {}", path, sizeof(header_));
 
@@ -59,6 +71,9 @@ bool paged_file::open(const std::string& path, int file_type) {
 
 paged_file::~paged_file() {
     close();
+    s3Manager = S3Manager("test","test");
+    
+    //s3Manager.CreateBucket("testdb");
 }
 
 void paged_file::set_callback(header_cb cb) { 
@@ -76,8 +91,10 @@ void paged_file::close() {
     file_.seekp(0, file_.beg);
     file_.write((char *) &header_, sizeof(header_));
     file_.flush(); 
-    // spdlog::debug("file {} closed with {} pages", file_name_, npages_);
+    spdlog::debug("file {} closed with {} pages", file_name_, npages_);
     file_.close();
+    // Save to S3
+    s3Manager.putDbObject(file_name_,"mybucket");
 }
 
 paged_file::page_id paged_file::allocate_page() {

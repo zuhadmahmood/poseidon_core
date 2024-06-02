@@ -521,3 +521,4 @@ $RECYCLE.BIN/
 # ignore everything in the generated documentation directory
 # (commented out because separate .gitignore inside that directory)
 # doc/generated/*
+.cache/*

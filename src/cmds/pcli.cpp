@@ -422,6 +422,7 @@ std::string check_config_files(const std::string& fname) {
 }
 
 int main(int argc, char* argv[]) {
+    std::getchar();
   std::string db_name, pool_path, query_file, import_path, dot_file, qmode_str, format = "ldbc";
   std::size_t bp_size = 0;
   std::vector<std::string> import_files;
